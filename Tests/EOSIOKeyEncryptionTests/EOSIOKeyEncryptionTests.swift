@@ -1,5 +1,5 @@
 import EOSIO
-@testable import EOSIOKeyEncryption
+@testable import EOSIOKeyEncryptionLegacy
 import XCTest
 
 final class EOSIOKeyEncryptionTests: XCTestCase {
@@ -20,34 +20,34 @@ final class EOSIOKeyEncryptionTests: XCTestCase {
     }
 
     func testSecurityLevel() {
-        var params = EncryptedPrivateKey.SecurityLevel.default.params
+        var params = EncryptedPrivateKeyLegacy.SecurityLevel.default.params
         XCTAssertEqual(params.N, 32768)
         XCTAssertEqual(params.r, 16)
         XCTAssertEqual(params.p, 1)
-        params = EncryptedPrivateKey.SecurityLevel.high.params
+        params = EncryptedPrivateKeyLegacy.SecurityLevel.high.params
         XCTAssertEqual(params.N, 65536)
         XCTAssertEqual(params.r, 16)
         XCTAssertEqual(params.p, 1)
-        params = EncryptedPrivateKey.SecurityLevel.paranoid.params
+        params = EncryptedPrivateKeyLegacy.SecurityLevel.paranoid.params
         XCTAssertEqual(params.N, 131_072)
         XCTAssertEqual(params.r, 16)
         XCTAssertEqual(params.p, 1)
-        params = EncryptedPrivateKey.SecurityLevel.custom(0).params
+        params = EncryptedPrivateKeyLegacy.SecurityLevel.custom(0).params
         XCTAssertEqual(params.N, 16384)
         XCTAssertEqual(params.r, 8)
         XCTAssertEqual(params.p, 1)
-        params = EncryptedPrivateKey.SecurityLevel.custom(0xFF).params
+        params = EncryptedPrivateKeyLegacy.SecurityLevel.custom(0xFF).params
         XCTAssertEqual(params.N, 2_097_152)
         XCTAssertEqual(params.r, 1024)
         XCTAssertEqual(params.p, 8)
 
-        XCTAssertEqual(EncryptedPrivateKey.SecurityLevel.default, EncryptedPrivateKey.SecurityLevel.custom(36))
-        XCTAssertNotEqual(EncryptedPrivateKey.SecurityLevel.default, EncryptedPrivateKey.SecurityLevel.custom(0))
-        XCTAssertNotEqual(EncryptedPrivateKey.SecurityLevel.default, EncryptedPrivateKey.SecurityLevel.high)
+        XCTAssertEqual(EncryptedPrivateKeyLegacy.SecurityLevel.default, EncryptedPrivateKeyLegacy.SecurityLevel.custom(36))
+        XCTAssertNotEqual(EncryptedPrivateKeyLegacy.SecurityLevel.default, EncryptedPrivateKeyLegacy.SecurityLevel.custom(0))
+        XCTAssertNotEqual(EncryptedPrivateKeyLegacy.SecurityLevel.default, EncryptedPrivateKeyLegacy.SecurityLevel.high)
     }
 
     func testCoding() {
-        let encryptedKey = EncryptedPrivateKey("SEC_K1_8vWLjFLTcvWNKY8wwfMKJJ3Sf278qb5xQgqXFzrRF44ECxACwoC3RPTj")
+        let encryptedKey = EncryptedPrivateKeyLegacy("SEC_K1_8vWLjFLTcvWNKY8wwfMKJJ3Sf278qb5xQgqXFzrRF44ECxACwoC3RPTj")
 
         let abiEncoder = ABIEncoder()
         let abiData: Data = try! abiEncoder.encode(encryptedKey)
@@ -66,12 +66,12 @@ final class EOSIOKeyEncryptionTests: XCTestCase {
         )
 
         let abiDecoder = ABIDecoder()
-        let abiDecoded = try! abiDecoder.decode(EncryptedPrivateKey.self, from: abiData)
+        let abiDecoded = try! abiDecoder.decode(EncryptedPrivateKeyLegacy.self, from: abiData)
 
         XCTAssertEqual(encryptedKey, abiDecoded)
 
         let jsonDecoder = JSONDecoder()
-        let jsonDecoded = try! jsonDecoder.decode(EncryptedPrivateKey.self, from: jsonData)
+        let jsonDecoded = try! jsonDecoder.decode(EncryptedPrivateKeyLegacy.self, from: jsonData)
 
         XCTAssertEqual(encryptedKey, jsonDecoded)
     }
