@@ -1,4 +1,6 @@
-# swift-eosio-key-encryption
+# swift-eosio-key-encryption-legacy
+
+# WARNING: this library contains code that create a bug when used with the current version of xcode 15. Use at your own risk.
 
 EOSIO Private Key encryption
 
