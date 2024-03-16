@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-eosio-key-encryption",
+    name: "swift-eosio-key-encryption-legacy",
     products: [
         .library(name: "EOSIOKeyEncryption", targets: ["EOSIOKeyEncryption"]),
     ],
@@ -16,7 +16,7 @@ let package = Package(
             name: "EOSIOKeyEncryption",
             dependencies: [
                 .product(name: "EOSIO", package: "swift-eosio"),
-                .product(name: "Scrypt", package: "swift-scrypt"),
+                .product(name: "Scrypt", package: "swift-scrypt-legacy"),
             ]
         ),
         .testTarget(
