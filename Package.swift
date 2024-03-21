@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "swift-eosio-key-encryption-legacy",
     products: [
-        .library(name: "EOSIOKeyEncryptionLegacy", targets: ["EOSIOKeyEncryptionLegacy"]),
+        .library(name: "EOSIOKeyEncryption", targets: ["EOSIOKeyEncryption"]),
     ],
     dependencies: [
         .package(url: "https://github.com/greymass/swift-eosio.git", .branch("master")),
@@ -13,15 +13,15 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "EOSIOKeyEncryptionLegacy",
+            name: "EOSIOKeyEncryption",
             dependencies: [
                 .product(name: "EOSIO", package: "swift-eosio"),
-                .product(name: "ScryptLegacy", package: "swift-scrypt-legacy"),
+                .product(name: "Scrypt", package: "swift-scrypt-legacy"),
             ]
         ),
         .testTarget(
             name: "EOSIOKeyEncryptionTests",
-            dependencies: ["EOSIOKeyEncryptionLegacy"]
+            dependencies: ["EOSIOKeyEncryption"]
         ),
     ]
 )

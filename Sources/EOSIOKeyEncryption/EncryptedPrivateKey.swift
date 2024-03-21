@@ -1,9 +1,9 @@
 import EOSIO
 import Foundation
-import ScryptLegacy
+import Scrypt
 
 /// Type encapsulating an encrypted EOSIO private key.
-public struct EncryptedPrivateKeyLegacy: Equatable, Hashable {
+public struct EncryptedPrivateKey: Equatable, Hashable {
     public enum SecurityLevel {
         case `default`
         case high
@@ -173,12 +173,13 @@ public struct EncryptedPrivateKeyLegacy: Equatable, Hashable {
     /// Decrypt private key, throws on wrong password.
     /// - Attention: This is very compute intensive, call this on a background thread. It's also good to verify that the
     ///              securityLevel is not set to something insane before attempting decryption.
-    public func decrypt(using password: Data) throws -> PrivateKey {
+    public func decrypt(using password: Data, useOldCompiler: Bool = false) throws -> PrivateKey {
         guard keyType == "K1" else {
-            throw EncryptedPrivateKeyLegacy.Error.unsupportedKeyType(keyType)
+            throw EncryptedPrivateKey.Error.unsupportedKeyType(keyType)
         }
 
-        var decrypted = try Self.crypt(ciphertext, password: password, salt: checksum, security: securityLevel, operation: .decrypt)
+        // Now, useOldCompiler will default to false if not specified
+        var decrypted = try Self.crypt(ciphertext, password: password, salt: checksum, security: securityLevel, operation: .decrypt, useOldCompiler: useOldCompiler)
         decrypted.insert(0x80, at: 0)
 
         let privateKey = try PrivateKey(fromK1Data: decrypted)
@@ -192,9 +193,9 @@ public struct EncryptedPrivateKeyLegacy: Equatable, Hashable {
     }
 
     /// Encrypt or decrypt given input using password, salt and security level (scrypt params).
-    fileprivate static func crypt(_ input: Data, password: Data, salt: Data, security: SecurityLevel, operation: AES.Operation) throws -> Data {
+    fileprivate static func crypt(_ input: Data, password: Data, salt: Data, security: SecurityLevel, operation: AES.Operation, useOldCompiler: Bool = false) throws -> Data {
         let params = security.params
-        let hash = try scrypt(password: Array(password), salt: Array(salt), length: 32 + 16, N: params.N, r: params.r, p: params.p)
+        let hash = try scrypt(password: Array(password), salt: Array(salt), length: 32 + 16, N: params.N, r: params.r, p: params.p, useOldCompiler: useOldCompiler)
         let iv = Data(hash[0 ..< 16])
         let key = Data(hash[16 ..< 48])
         return try AES(key: key, iv: iv).crypt(input: input, operation: operation)
@@ -204,23 +205,23 @@ public struct EncryptedPrivateKeyLegacy: Equatable, Hashable {
 public extension PrivateKey {
     /// Encrypt this private key using given password.
     /// - Attention: This is very compute intensive, call this on a background thread.
-    func encrypted(using password: Data, securityLevel: EncryptedPrivateKeyLegacy.SecurityLevel = .default) throws -> EncryptedPrivateKeyLegacy {
+    func encrypted(using password: Data, securityLevel: EncryptedPrivateKey.SecurityLevel = .default) throws -> EncryptedPrivateKey {
         guard keyType == "K1" else {
-            throw EncryptedPrivateKeyLegacy.Error.unsupportedKeyType(keyType)
+            throw EncryptedPrivateKey.Error.unsupportedKeyType(keyType)
         }
 
         // key checksum, also used as scrypt salt
         let checksum = (try getPublic()).checksum
 
         // encrypt the key
-        let encrypted = try EncryptedPrivateKeyLegacy.crypt(keyData, password: password, salt: checksum, security: securityLevel, operation: .encrypt)
+        let encrypted = try EncryptedPrivateKey.crypt(keyData, password: password, salt: checksum, security: securityLevel, operation: .encrypt)
 
         // pack result with header and checksum
         var data = Data([securityLevel.flags])
         data.append(contentsOf: checksum)
         data.append(contentsOf: encrypted)
 
-        return try EncryptedPrivateKeyLegacy(fromK1Data: data)
+        return try EncryptedPrivateKey(fromK1Data: data)
     }
 }
 
@@ -233,7 +234,7 @@ public extension PublicKey {
 
 // MARK: - ABI Coding conformance
 
-extension EncryptedPrivateKeyLegacy: ABICodable {
+extension EncryptedPrivateKey: ABICodable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         try self.init(stringValue: try container.decode(String.self))
@@ -257,7 +258,7 @@ extension EncryptedPrivateKeyLegacy: ABICodable {
             guard let instance = Self(fromUnknownData: data, ofType: typeName) else {
                 throw DecodingError.dataCorrupted(DecodingError.Context(
                     codingPath: decoder.codingPath,
-                    debugDescription: "Unable to create EncryptedPrivateKeyLegacy instance for unknown type: \(typeName)"
+                    debugDescription: "Unable to create EncryptedPrivateKey instance for unknown type: \(typeName)"
                 ))
             }
             self = instance
@@ -288,9 +289,9 @@ extension EncryptedPrivateKeyLegacy: ABICodable {
 
 // MARK: - Standard protocol conformances
 
-extension EncryptedPrivateKeyLegacy: LosslessStringConvertible {
+extension EncryptedPrivateKey: LosslessStringConvertible {
     public init?(_ description: String) {
-        guard let instance = try? EncryptedPrivateKeyLegacy(stringValue: description) else {
+        guard let instance = try? EncryptedPrivateKey(stringValue: description) else {
             return nil
         }
         self = instance
@@ -301,23 +302,23 @@ extension EncryptedPrivateKeyLegacy: LosslessStringConvertible {
     }
 }
 
-extension EncryptedPrivateKeyLegacy: ExpressibleByStringLiteral {
+extension EncryptedPrivateKey: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
-        guard let instance = try? EncryptedPrivateKeyLegacy(stringValue: value) else {
-            fatalError("Invalid EncryptedPrivateKeyLegacy literal")
+        guard let instance = try? EncryptedPrivateKey(stringValue: value) else {
+            fatalError("Invalid EncryptedPrivateKey literal")
         }
         self = instance
     }
 }
 
-extension EncryptedPrivateKeyLegacy.SecurityLevel: CustomStringConvertible {
+extension EncryptedPrivateKey.SecurityLevel: CustomStringConvertible {
     public var description: String {
         let params = self.params
         return "N=\(params.N) r=\(params.r) p=\(params.p)"
     }
 }
 
-extension EncryptedPrivateKeyLegacy.SecurityLevel: Equatable {
+extension EncryptedPrivateKey.SecurityLevel: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.flags == rhs.flags
     }
